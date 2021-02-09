@@ -1,6 +1,6 @@
 {
   "name": "keycloak-lambda-authorizer",
-  "version": "0.3.6",
+  "version": "0.4.0",
   "description": "Keycloak adapter for aws Lambda",
   "main": "index.js",
   "homepage": "https://github.com/vzakharchenko/keycloak-lambda-authorizer",
@@ -69,7 +69,6 @@
     "aws-arn-parser": "^1.0.1",
     "axios": "^0.21.0",
     "cookie": "^0.4.1",
-    "get-keycloak-public-key": "^1.0.3",
     "jsonwebtoken": "^8.5.1",
     "jws": "^4.0.0",
     "node-cache": "^5.1.2",
