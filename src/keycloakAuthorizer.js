@@ -1,6 +1,6 @@
 const jsonwebtoken = require('jsonwebtoken');
 
-const KeyCloakCerts = require('get-keycloak-public-key');
+const { KeycloakPublicKeyFetcher } = require('./keycloakCerts');
 const { getKeycloakUrl } = require('./utils/restCalls');
 const { enforce } = require('./umaConfiguration');
 const { commonOptions } = require('./utils/optionsUtils');
@@ -9,8 +9,8 @@ async function getKeyFromKeycloak(options, kid) {
   let publicKey = await options.cache.get('publicKey', kid);
   if (!publicKey) {
     const kJson = options.keycloakJson(options);
-    const keycloakUrl = getKeycloakUrl(kJson).replace('/auth', '');
-    publicKey = await KeyCloakCerts(keycloakUrl,
+    const keycloakUrl = getKeycloakUrl(kJson);
+    publicKey = await KeycloakPublicKeyFetcher(keycloakUrl,
       kJson.realm).fetch(kid);
     await options.cache.put('publicKey', kid, publicKey);
   }
@@ -27,7 +27,7 @@ function getTokenString(event) {
   if (!tokenString) {
     throw new Error('Expected \'event.authorizationToken\' parameter to be set');
   }
-  const match = tokenString.match(/^Bearer (.*)$/);
+  const match = tokenString.match(/^Bearer (.*)$/i);
   if (!match || match.length < 2) {
     throw new Error(`Invalid Authorization token - '${tokenString}' does not match 'Bearer .*'`);
   }
@@ -43,7 +43,11 @@ async function verifyToken(token, options) {
     try {
       // Verify and decode the token
       jsonwebtoken.verify(token.tokenString, key);
-      options.logger.debug('token verified successfully ');
+      let realm = 'NO_ISS';
+      if (token.payload && token.payload.iss && token.payload.iss.lastIndexOf('/') > 0) {
+        realm = token.payload.iss.substr(token.payload.iss.lastIndexOf('/') + 1);
+      }
+      options.logger.debug(`token verified successfully: ${realm}`);
       return token;
     } catch (error) {
       // Token is not valid
